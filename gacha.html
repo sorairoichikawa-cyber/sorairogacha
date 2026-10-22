@@ -114,6 +114,7 @@ button.main:disabled{opacity:.5}
   50%{box-shadow:0 0 40px #7fd4ff,0 0 90px #3a9bff,0 14px 40px rgba(0,0,0,.5)}
   75%{box-shadow:0 0 40px #b388ff,0 0 90px #7c4dff,0 14px 40px rgba(0,0,0,.5)}}
 
+[hidden]{display:none!important}   /* デモ用ボタンを本番で隠す（display指定に負けないように） */
 /* ===== スタンプ・カード番号 ===== */
 .stamps{display:inline-flex;gap:5px;justify-content:center;flex-wrap:wrap;max-width:300px;background:rgba(255,255,255,.88);border-radius:14px;padding:8px 12px}
 .stamps i{width:22px;height:22px;border-radius:50%;border:2px solid #7fbbea;background:#fff;display:inline-block;font-style:normal;font-size:12px;line-height:18px;text-align:center;color:#fff;transition:background .4s,transform .4s}
@@ -369,6 +370,7 @@ function renderCard(r) {
   document.querySelector('h1').style.display = 'none';   // 結果表示中は見出しをバナーに譲り、カードを上に詰める
   document.querySelector('.sub').style.display = 'none';
   $('app').style.paddingTop = 'clamp(96px,13vh,120px)';
+  window.scrollTo(0, 0); setTimeout(() => window.scrollTo(0, 0), 700);   // LINEアプリ内で下にずれて見出しがカードに重ならないように
   requestAnimationFrame(() => setTimeout(() => $('card').classList.add('show'), 50));
   $('note').textContent = r.prizeCode || r.reward ? ((r.ui && r.ui.redeemNote) || '次回のご来店時、このコードをスタッフにお見せください。') : '';
 
