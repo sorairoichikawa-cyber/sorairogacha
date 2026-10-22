@@ -344,28 +344,46 @@ const TIERS = {
 };
 function tierOf(r) { const k = (r.card && r.card.rarity) || (r.big ? 'SSSR' : 'R'); return TIERS[k] ? k : 'R'; }
 
-function renderCard(r) {
+// 写真つきの標準カード（画像URLが空のとき、または画像が読み込めなかったときに使う）
+function classicCard(r) {
   const tier = tierOf(r), T = TIERS[tier];
-  const win = tier === 'SSSR';
   const c = r.card || {};
   const th = r.therapist || {};
   const photo = th.photoUrl ? `<img src="${esc(th.photoUrl)}" alt="">` : esc((th.name || '？').charAt(0));
   const prizeText = r.prizeLabel || 'ご来店ありがとうございます';
-  const codeLine = r.prizeCode ? `<small>引換コード: ${esc(r.prizeCode)}</small>` : '';
   const no = `${c.no ? esc(c.no) + ' ' : ''}<span class="rbadge ${tier}">${tier}</span><span class="stars">${'★'.repeat(T.star)}</span>`;
-  if (win || c.img) {
-    // 大当たり（SSSR）は専用カード画像、画像登録のあるカードはその画像を表示し、賞品名と引換コードを下に添える
-    const src = c.img || WIN_IMG;
-    $('stage').innerHTML = `<div class="winwrap"><div class="card ${win ? 'gold winimg' : 'imgcard'} t-${tier}${tier === 'SSR' || tier === 'UR' ? ' gold' : ''}" id="card"><img src="${esc(src)}" alt="${esc(c.no)} ${esc(c.rarity)}"></div>
-      <div class="winfoot">${win ? '🎉 ' : ''}${esc(prizeText)}${codeLine}<small>${no}</small></div></div>`;
-  } else {
-    $('stage').innerHTML = `<div class="card t-${tier}${tier === 'SSR' || tier === 'UR' ? ' gold' : ''}" id="card">
+  return `<div class="card t-${tier}${tier === 'SSR' || tier === 'UR' ? ' gold' : ''}" id="card">
     <div class="cardno">${no}</div>
     <div class="photo">${photo}</div>
     <div class="name">${esc(th.name)}</div>
     <div class="prize">${esc(prizeText)}</div>
     ${r.prizeCode ? `<div class="code">引換コード: ${esc(r.prizeCode)}</div>` : ''}
   </div>`;
+}
+// カード画像が読み込めないとき: 大当たりは専用画像に、その他は標準カードに差し替える（壊れた画像を見せない）
+function cardImgFail(el) {
+  el.onerror = null;
+  if (el.dataset.big === '1') { el.src = WIN_IMG; return; }
+  if (!window.__r) return;
+  $('stage').innerHTML = classicCard(window.__r);
+  const c = $('card'); if (c) requestAnimationFrame(() => c.classList.add('show'));
+}
+
+function renderCard(r) {
+  window.__r = r;
+  const tier = tierOf(r), T = TIERS[tier];
+  const win = tier === 'SSSR';
+  const c = r.card || {};
+  const prizeText = r.prizeLabel || 'ご来店ありがとうございます';
+  const codeLine = r.prizeCode ? `<small>引換コード: ${esc(r.prizeCode)}</small>` : '';
+  const no = `${c.no ? esc(c.no) + ' ' : ''}<span class="rbadge ${tier}">${tier}</span><span class="stars">${'★'.repeat(T.star)}</span>`;
+  if (win || c.img) {
+    // 大当たり（SSSR）は専用カード画像、画像登録のあるカードはその画像を表示し、賞品名と引換コードを下に添える
+    const src = c.img || WIN_IMG;
+    $('stage').innerHTML = `<div class="winwrap"><div class="card ${win ? 'gold winimg' : 'imgcard'} t-${tier}${tier === 'SSR' || tier === 'UR' ? ' gold' : ''}" id="card"><img src="${esc(src)}" data-big="${win ? 1 : 0}" onerror="cardImgFail(this)" alt=""></div>
+      <div class="winfoot">${win ? '🎉 ' : ''}${esc(prizeText)}${codeLine}<small>${no}</small></div></div>`;
+  } else {
+    $('stage').innerHTML = classicCard(r);
   }
   document.querySelector('h1').style.display = 'none';   // 結果表示中は見出しをバナーに譲り、カードを上に詰める
   document.querySelector('.sub').style.display = 'none';
