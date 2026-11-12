@@ -125,8 +125,12 @@ button.main:disabled{opacity:.5}
 .stamps i.on{background:#ffb81f;border-color:#e08b00;transform:scale(1.05)}
 .stamps i.on::after{content:'★'}
 .stampcap{font-size:12px;font-weight:700;color:var(--ink);background:rgba(255,255,255,.88);border-radius:10px;padding:3px 10px;margin-top:6px;display:inline-block}
-#stampbar{margin:10px 0 2px;min-height:0;position:relative;z-index:3}
+#stampbar{margin:16px 0 2px;min-height:0;position:relative;z-index:3}
 #stampbar:empty{display:none}
+#untilFree{text-align:center;margin:10px 0 2px;position:relative;z-index:3}
+#untilFree:empty{display:none}
+#untilFree .stampcap{display:inline-block;font-size:15px;padding:7px 18px;white-space:nowrap}
+#untilFree b{font-size:22px;color:#ffd86b;margin:0 2px}
 .cardno{font-size:11px;letter-spacing:.14em;font-weight:800;color:#1f6fb8;margin-bottom:6px}
 .card.imgcard{width:min(300px,82vw);padding:0;background:#fff;border-radius:16px;line-height:0;overflow:hidden}
 .card.imgcard img{width:100%;display:block}
@@ -271,7 +275,7 @@ body.abyss .banner{color:#fff}
   box-shadow:0 0 18px #ffd86b,inset 0 0 10px #fff}
 .wings .halo{animation:halodrop .7s .15s cubic-bezier(.2,1.6,.4,1) forwards}
 @keyframes halodrop{to{opacity:1;transform:none}}
-.hs-title{position:absolute;left:0;right:0;top:5%;text-align:center;display:flex;justify-content:center;white-space:nowrap;transform:rotate(-5deg);
+.hs-title{position:absolute;left:0;right:0;top:12%;text-align:center;display:flex;justify-content:center;white-space:nowrap;transform:rotate(-5deg);
   font-weight:900;font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;filter:drop-shadow(0 0 14px #fff) drop-shadow(0 6px 0 rgba(30,0,60,.6))}
 .hs-title .ch{position:relative;display:inline-block;font-size:var(--fs);opacity:0;animation:slamh .5s cubic-bezier(.2,1.5,.4,1) forwards}
 .hs-title .ch::before{content:attr(data-c);position:absolute;left:0;top:0;color:#2a0a4a;-webkit-text-stroke:.3em #2a0a4a}
@@ -295,7 +299,7 @@ body.abyss .banner{color:#fff}
 .cr{fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:crdraw .35s ease-out forwards}
 @keyframes crdraw{to{stroke-dashoffset:0}}
 #crackTxt{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%) scale(1);text-align:center;font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;font-weight:900;
-  font-size:clamp(40px,12.5vw,60px);letter-spacing:.12em;color:#fff;opacity:0;text-shadow:0 0 14px #ff2d6f,0 3px 0 #3a0014;will-change:transform,opacity}
+  font-size:clamp(34px,10.5vw,54px);letter-spacing:.06em;white-space:nowrap;color:#fff;opacity:0;text-shadow:0 0 14px #ff2d6f,0 3px 0 #3a0014;will-change:transform,opacity}
 #crackTxt.in{animation:crtx 2.4s ease-out forwards}
 @keyframes crtx{0%{opacity:0;transform:translateY(-50%) scale(3.2)}14%{opacity:1;transform:translateY(-50%) scale(.94)}22%{transform:translateY(-50%) scale(1.04)}30%,100%{opacity:1;transform:translateY(-50%) scale(1)}}
 </style>
@@ -324,9 +328,10 @@ body.abyss .banner{color:#fff}
     <div id="cardSlot" style="display:none"></div>
     <div id="skyhint" style="display:none"></div>
   </div>
-  <div id="stampbar"></div>
   <div class="dialog"><div class="chappy" id="chappy" aria-label="チャッピー"></div><div class="bubble"><div class="nm">チャッピー</div><div class="tx" id="say"></div></div></div>
   <button class="main" id="btn">ガチャを回す</button>
+  <div id="stampbar"></div>
+  <div id="untilFree"></div>
   <div class="demoTools" id="demoTools" hidden>
     <button class="tier" data-t="R">R</button><button class="tier" data-t="SR">SR</button><button class="tier" data-t="SSR">SSR</button><button class="tier" data-t="UR">UR</button><button class="tier" data-t="SSSR">SSSR</button>
     <button id="btnStamp">⏩ 次を10回目にする</button>
@@ -408,13 +413,16 @@ function applyUi(ui) {
 // スタンプ表示。pre=true は引く前（今のたまり具合）、false は引いた後
 function renderStamps(st, pre) {
   const el = $('stampbar');
-  if (!st || !st.goal) { el.innerHTML = ''; return; }
+  const uf = $('untilFree');
+  if (!st || !st.goal) { el.innerHTML = ''; if (uf) uf.innerHTML = ''; return; }
   const filled = pre ? st.count % st.goal : st.filled;
   let dots = '';
   for (let i = 0; i < st.goal; i++) dots += `<i class="${i < filled ? 'on' : ''}"></i>`;
   const left = st.goal - filled;
-  const cap = (!pre && filled >= st.goal) ? '🎉 スタンプがたまりました！' : (pre ? `あと${left}回引くと無料券がもらえます` : `あと${left}回で無料券！`);
-  el.innerHTML = `<div class="stamps">${dots}</div><div><span class="stampcap">${cap}（${filled}/${st.goal}）</span></div>`;
+  const done = !pre && filled >= st.goal;
+  const cap = done ? '🎉 スタンプがたまりました！' : `あと<b>${left}</b>回で無料券！`;
+  el.innerHTML = `<div class="stamps">${dots}</div>`;
+  if (uf) uf.innerHTML = `<span class="stampcap">${cap}（${filled}/${st.goal}）</span>`;
 }
 
 // デモ用: 引いた回数をブラウザに保存（本番はサーバーがLINEユーザーごとに数える）
